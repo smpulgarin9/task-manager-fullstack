@@ -1,0 +1,22 @@
+# Java
+target/
+*.class
+*.jar
+.idea/
+*.iml
+
+# Node
+node_modules/
+.expo/
+build/
+*.tsbuildinfo
+
+# General
+.DS_Store
+.env
+*.log
+
+# Mobile
+ios/Pods/
+android/.gradle/
+android/app/build/
