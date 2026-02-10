@@ -1,5 +1,6 @@
 package com.taskmanager.dto;
 
+import jakarta.validation.constraints.NotBlank;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -9,11 +10,8 @@ import lombok.NoArgsConstructor;
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
-public class AuthResponse {
+public class RefreshTokenRequest {
 
-    private String token;
+    @NotBlank(message = "El refresh token es obligatorio")
     private String refreshToken;
-    private String email;
-    private String fullName;
-    private String role;
 }

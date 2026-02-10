@@ -11,6 +11,7 @@ import { ScrollView } from 'react-native-gesture-handler';
 import {NativeStackScreenProps} from '@react-navigation/native-stack';
 import {ProjectStackParamList} from '../navigation/types';
 import {useProjectStore} from '../store/projectStore';
+import {usePermissions} from '../hooks/usePermissions';
 import {Task} from '../types';
 import BoardColumn from '../components/BoardColumn';
 import CreateTaskModal from './CreateTaskModal';
@@ -21,6 +22,7 @@ const KanbanBoardScreen: React.FC<Props> = ({route, navigation}) => {
   const {projectId} = route.params;
   const {currentProject, isLoading, fetchProjectDetail, moveTask} =
     useProjectStore();
+  const {canManageMembers} = usePermissions();
   const [taskModalVisible, setTaskModalVisible] = useState(false);
 
   useEffect(() => {
@@ -44,11 +46,13 @@ const KanbanBoardScreen: React.FC<Props> = ({route, navigation}) => {
     navigation.setOptions({
       headerRight: () => (
         <View style={styles.headerActions}>
-          <TouchableOpacity
-            onPress={showProjectInfo}
-            style={styles.headerInfoButton}>
-            <Text style={styles.headerInfoText}>i</Text>
-          </TouchableOpacity>
+          {canManageMembers() && (
+            <TouchableOpacity
+              onPress={showProjectInfo}
+              style={styles.headerInfoButton}>
+              <Text style={styles.headerInfoText}>i</Text>
+            </TouchableOpacity>
+          )}
           <TouchableOpacity
             onPress={() => setTaskModalVisible(true)}
             style={styles.headerButton}>
@@ -57,7 +61,7 @@ const KanbanBoardScreen: React.FC<Props> = ({route, navigation}) => {
         </View>
       ),
     });
-  }, [navigation, showProjectInfo]);
+  }, [navigation, showProjectInfo, canManageMembers]);
 
   const handleTaskPress = useCallback(
     (task: Task) => {

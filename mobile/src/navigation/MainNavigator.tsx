@@ -4,10 +4,14 @@ import {Text} from 'react-native';
 import {MainTabParamList} from './types';
 import ProjectNavigator from './ProjectNavigator';
 import ProfileScreen from '../screens/ProfileScreen';
+import AdminScreen from '../screens/AdminScreen';
+import {usePermissions} from '../hooks/usePermissions';
 
 const Tab = createBottomTabNavigator<MainTabParamList>();
 
 const MainNavigator: React.FC = () => {
+  const {isAdmin} = usePermissions();
+
   return (
     <Tab.Navigator
       screenOptions={{
@@ -33,6 +37,20 @@ const MainNavigator: React.FC = () => {
           ),
         }}
       />
+      {isAdmin() && (
+        <Tab.Screen
+          name="Admin"
+          component={AdminScreen}
+          options={{
+            tabBarLabel: 'Admin',
+            headerShown: true,
+            headerTitle: 'Administración',
+            tabBarIcon: ({color, size}) => (
+              <Text style={{fontSize: size, color}}>{'⚙️'}</Text>
+            ),
+          }}
+        />
+      )}
       <Tab.Screen
         name="Profile"
         component={ProfileScreen}

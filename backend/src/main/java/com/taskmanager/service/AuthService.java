@@ -3,6 +3,7 @@ package com.taskmanager.service;
 import com.taskmanager.dto.AuthResponse;
 import com.taskmanager.dto.LoginRequest;
 import com.taskmanager.dto.RegisterRequest;
+import com.taskmanager.entity.RefreshToken;
 import com.taskmanager.entity.User;
 import com.taskmanager.enums.Role;
 import com.taskmanager.exception.DuplicateResourceException;
@@ -12,6 +13,7 @@ import com.taskmanager.security.JwtService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 @Service
 @RequiredArgsConstructor
@@ -20,6 +22,7 @@ public class AuthService {
     private final UserRepository userRepository;
     private final PasswordEncoder passwordEncoder;
     private final JwtService jwtService;
+    private final RefreshTokenService refreshTokenService;
 
     public AuthResponse register(RegisterRequest request) {
         if (userRepository.existsByEmail(request.getEmail())) {
@@ -33,12 +36,14 @@ public class AuthService {
                 .role(Role.MEMBER)
                 .build();
 
-        userRepository.save(user);
+        user = userRepository.save(user);
 
-        String token = jwtService.generateToken(user);
+        String accessToken = jwtService.generateToken(user);
+        RefreshToken refreshToken = refreshTokenService.createRefreshToken(user.getId());
 
         return AuthResponse.builder()
-                .token(token)
+                .token(accessToken)
+                .refreshToken(refreshToken.getToken())
                 .email(user.getEmail())
                 .fullName(user.getFullName())
                 .role(user.getRole().name())
@@ -53,13 +58,37 @@ public class AuthService {
             throw new UnauthorizedException("Credenciales inválidas");
         }
 
-        String token = jwtService.generateToken(user);
+        String accessToken = jwtService.generateToken(user);
+        RefreshToken refreshToken = refreshTokenService.createRefreshToken(user.getId());
 
         return AuthResponse.builder()
-                .token(token)
+                .token(accessToken)
+                .refreshToken(refreshToken.getToken())
                 .email(user.getEmail())
                 .fullName(user.getFullName())
                 .role(user.getRole().name())
                 .build();
+    }
+
+    public AuthResponse refreshToken(String refreshTokenStr) {
+        RefreshToken refreshToken = refreshTokenService.findByToken(refreshTokenStr);
+        refreshTokenService.verifyExpiration(refreshToken);
+
+        User user = refreshToken.getUser();
+        String newAccessToken = jwtService.generateToken(user);
+
+        return AuthResponse.builder()
+                .token(newAccessToken)
+                .refreshToken(refreshToken.getToken())
+                .email(user.getEmail())
+                .fullName(user.getFullName())
+                .role(user.getRole().name())
+                .build();
+    }
+
+    @Transactional
+    public void logout(String refreshTokenStr) {
+        RefreshToken refreshToken = refreshTokenService.findByToken(refreshTokenStr);
+        refreshTokenService.deleteByUserId(refreshToken.getUser().getId());
     }
 }

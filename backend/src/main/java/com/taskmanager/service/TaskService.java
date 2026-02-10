@@ -2,6 +2,7 @@ package com.taskmanager.service;
 
 import com.taskmanager.dto.*;
 import com.taskmanager.entity.*;
+import com.taskmanager.enums.Permission;
 import com.taskmanager.enums.Priority;
 import com.taskmanager.exception.AccessDeniedException;
 import com.taskmanager.exception.ResourceNotFoundException;
@@ -22,9 +23,12 @@ public class TaskService {
     private final BoardRepository boardRepository;
     private final UserRepository userRepository;
     private final LabelRepository labelRepository;
+    private final PermissionService permissionService;
 
     @Transactional
     public TaskResponse createTask(TaskRequest request, User currentUser) {
+        permissionService.checkPermission(currentUser, Permission.TASK_CREATE);
+
         Board board = boardRepository.findById(request.getBoardId())
                 .orElseThrow(() -> new ResourceNotFoundException("Board no encontrado con id: " + request.getBoardId()));
 
@@ -73,6 +77,8 @@ public class TaskService {
 
     @Transactional
     public TaskResponse updateTask(Long id, TaskRequest request, User currentUser) {
+        permissionService.checkPermission(currentUser, Permission.TASK_EDIT);
+
         Task task = taskRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Tarea no encontrada con id: " + id));
 
@@ -120,6 +126,8 @@ public class TaskService {
 
     @Transactional
     public void deleteTask(Long id, User currentUser) {
+        permissionService.checkPermission(currentUser, Permission.TASK_DELETE);
+
         Task task = taskRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Tarea no encontrada con id: " + id));
 
@@ -142,6 +150,8 @@ public class TaskService {
      */
     @Transactional
     public TaskResponse moveTask(Long taskId, TaskMoveRequest request, User currentUser) {
+        permissionService.checkPermission(currentUser, Permission.TASK_MOVE);
+
         Task task = taskRepository.findById(taskId)
                 .orElseThrow(() -> new ResourceNotFoundException("Tarea no encontrada con id: " + taskId));
 

@@ -29,6 +29,15 @@ Inspirada en herramientas como **Trello** y **Jira**, permite organizar el traba
 
 **Autenticacion:** JWT stateless — el cliente envia el token en el header `Authorization: Bearer <token>` en cada peticion.
 
+La autenticación usa un esquema de doble token: un access token JWT de corta duración (15 min)
+para las peticiones API, y un refresh token de larga duración (7 días) almacenado en base de datos
+para renovar el access token sin requerir login. El logout invalida el refresh token en el servidor.
+
+El sistema implementa 3 roles con permisos granulares:
+- ADMIN: acceso completo, gestión de usuarios y roles
+- PROJECT_MANAGER: gestión de proyectos, boards y miembros
+- MEMBER: visualización de proyectos, creación y gestión de tareas
+
 ---
 
 ## Modelo de Datos
@@ -123,6 +132,10 @@ npx react-native run-ios
 |--------|------|-------------|------|
 | POST | `/api/auth/register` | Registrar nuevo usuario | No |
 | POST | `/api/auth/login` | Iniciar sesion y obtener JWT | No |
+| POST | /api/auth/refresh | Renovar access token      | No (usa refresh token) |
+| POST | /api/auth/logout  | Cerrar sesión             | No (usa refresh token) |
+| GET    | /api/admin/users           | Listar usuarios           | Sí (solo ADMIN)        |
+| PUT    | /api/admin/roles/{userId}  | Cambiar rol de usuario    | Sí (solo ADMIN)        |
 
 ### Proyectos
 
@@ -177,6 +190,12 @@ npx react-native run-ios
 - ✅ Etiquetas por proyecto
 - ✅ Pruebas unitarias (backend y mobile)
 - ✅ Dockerizado
+- ✅ Gestión de roles: ADMIN, PROJECT_MANAGER, MEMBER
+- ✅ Sistema de permisos granular por rol
+- ✅ Refresh tokens para sesiones seguras
+- ✅ Endpoint de logout que invalida refresh token
+- ✅ Panel de administración para gestionar roles (solo ADMIN)
+- ✅ UI adaptada según permisos del usuario
 
 ---
 

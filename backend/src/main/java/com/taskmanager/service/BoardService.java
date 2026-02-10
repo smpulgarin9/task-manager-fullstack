@@ -5,6 +5,7 @@ import com.taskmanager.dto.BoardReorderRequest;
 import com.taskmanager.entity.Board;
 import com.taskmanager.entity.Project;
 import com.taskmanager.entity.User;
+import com.taskmanager.enums.Permission;
 import com.taskmanager.exception.AccessDeniedException;
 import com.taskmanager.exception.ResourceNotFoundException;
 import com.taskmanager.repository.BoardRepository;
@@ -22,9 +23,12 @@ public class BoardService {
 
     private final BoardRepository boardRepository;
     private final ProjectRepository projectRepository;
+    private final PermissionService permissionService;
 
     @Transactional
     public Board createBoard(Long projectId, BoardRequest request, User currentUser) {
+        permissionService.checkPermission(currentUser, Permission.BOARD_CREATE);
+
         Project project = projectRepository.findById(projectId)
                 .orElseThrow(() -> new ResourceNotFoundException("Proyecto no encontrado con id: " + projectId));
 
@@ -46,6 +50,8 @@ public class BoardService {
 
     @Transactional
     public Board updateBoard(Long boardId, BoardRequest request, User currentUser) {
+        permissionService.checkPermission(currentUser, Permission.BOARD_EDIT);
+
         Board board = boardRepository.findById(boardId)
                 .orElseThrow(() -> new ResourceNotFoundException("Board no encontrado con id: " + boardId));
 
@@ -57,6 +63,8 @@ public class BoardService {
 
     @Transactional
     public void deleteBoard(Long boardId, User currentUser) {
+        permissionService.checkPermission(currentUser, Permission.BOARD_DELETE);
+
         Board board = boardRepository.findById(boardId)
                 .orElseThrow(() -> new ResourceNotFoundException("Board no encontrado con id: " + boardId));
 

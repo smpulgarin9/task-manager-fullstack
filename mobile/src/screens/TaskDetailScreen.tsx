@@ -14,6 +14,7 @@ import {
 import {NativeStackScreenProps} from '@react-navigation/native-stack';
 import {ProjectStackParamList} from '../navigation/types';
 import {useProjectStore} from '../store/projectStore';
+import {usePermissions} from '../hooks/usePermissions';
 import {taskService, TaskRequest} from '../api/taskService';
 import {Task} from '../types';
 import CustomButton from '../components/CustomButton';
@@ -35,6 +36,7 @@ type Props = NativeStackScreenProps<ProjectStackParamList, 'TaskDetail'>;
 const TaskDetailScreen: React.FC<Props> = ({route, navigation}) => {
   const {taskId} = route.params;
   const {currentProject, deleteTask, fetchProjectDetail} = useProjectStore();
+  const {canDeleteTask} = usePermissions();
 
   const task = useMemo(() => {
     if (!currentProject) {
@@ -275,13 +277,17 @@ const TaskDetailScreen: React.FC<Props> = ({route, navigation}) => {
             isLoading={isSaving}
             disabled={isSaving}
           />
-          <View style={styles.buttonSpacer} />
-          <CustomButton
-            title="Eliminar tarea"
-            onPress={handleDelete}
-            variant="danger"
-            disabled={isSaving}
-          />
+          {canDeleteTask() && (
+            <>
+              <View style={styles.buttonSpacer} />
+              <CustomButton
+                title="Eliminar tarea"
+                onPress={handleDelete}
+                variant="danger"
+                disabled={isSaving}
+              />
+            </>
+          )}
         </View>
       </ScrollView>
     </KeyboardAvoidingView>

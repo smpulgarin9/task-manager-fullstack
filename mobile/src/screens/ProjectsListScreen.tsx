@@ -11,6 +11,7 @@ import {NativeStackScreenProps} from '@react-navigation/native-stack';
 import {ProjectStackParamList} from '../navigation/types';
 import {useProjectStore} from '../store/projectStore';
 import {ProjectResponse} from '../api/projectService';
+import {usePermissions} from '../hooks/usePermissions';
 import ProjectCard from '../components/ProjectCard';
 import EmptyState from '../components/EmptyState';
 import CreateProjectModal from './CreateProjectModal';
@@ -22,6 +23,7 @@ const ProjectsListScreen: React.FC<Props> = ({navigation}) => {
   const [refreshing, setRefreshing] = useState(false);
 
   const {projects, isLoading, fetchProjects} = useProjectStore();
+  const {canCreateProject} = usePermissions();
 
   useEffect(() => {
     fetchProjects().catch(() => {});
@@ -80,19 +82,23 @@ const ProjectsListScreen: React.FC<Props> = ({navigation}) => {
         }
       />
 
-      <TouchableOpacity
-        style={styles.fab}
-        onPress={() => setModalVisible(true)}
-        activeOpacity={0.8}>
-        <Text style={styles.fabText}>+</Text>
-      </TouchableOpacity>
+      {canCreateProject() && (
+        <TouchableOpacity
+          style={styles.fab}
+          onPress={() => setModalVisible(true)}
+          activeOpacity={0.8}>
+          <Text style={styles.fabText}>+</Text>
+        </TouchableOpacity>
+      )}
 
-      <CreateProjectModal
-        visible={modalVisible}
-        onClose={() => {
-          setModalVisible(false);
-        }}
-      />
+      {canCreateProject() && (
+        <CreateProjectModal
+          visible={modalVisible}
+          onClose={() => {
+            setModalVisible(false);
+          }}
+        />
+      )}
     </View>
   );
 };

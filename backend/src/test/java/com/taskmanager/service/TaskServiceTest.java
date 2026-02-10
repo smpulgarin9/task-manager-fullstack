@@ -7,6 +7,7 @@ import com.taskmanager.entity.Board;
 import com.taskmanager.entity.Project;
 import com.taskmanager.entity.Task;
 import com.taskmanager.entity.User;
+import com.taskmanager.enums.Permission;
 import com.taskmanager.enums.Priority;
 import com.taskmanager.enums.Role;
 import com.taskmanager.exception.ResourceNotFoundException;
@@ -26,7 +27,7 @@ import java.util.*;
 
 import static org.assertj.core.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.anyLong;
+import static org.mockito.ArgumentMatchers.anyList;
 import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
@@ -44,6 +45,9 @@ class TaskServiceTest {
     @Mock
     private LabelRepository labelRepository;
 
+    @Mock
+    private PermissionService permissionService;
+
     @InjectMocks
     private TaskService taskService;
 
@@ -60,7 +64,7 @@ class TaskServiceTest {
                 .id(1L)
                 .email("sara@test.com")
                 .fullName("Sara Pulgarin")
-                .role(Role.MEMBER)
+                .role(Role.ADMIN)
                 .build();
 
         project = Project.builder()
@@ -134,6 +138,7 @@ class TaskServiceTest {
         assertThat(response.getPosition()).isEqualTo(0);
         assertThat(response.getBoardId()).isEqualTo(1L);
 
+        verify(permissionService).checkPermission(owner, Permission.TASK_CREATE);
         verify(boardRepository).findById(1L);
         verify(taskRepository).save(any(Task.class));
     }
@@ -161,9 +166,8 @@ class TaskServiceTest {
         assertThat(response.getBoardId()).isEqualTo(2L);
         assertThat(response.getPosition()).isEqualTo(0);
 
-        // Verifica que se reordenaron las tareas del board origen
+        verify(permissionService).checkPermission(owner, Permission.TASK_MOVE);
         verify(taskRepository, atLeast(2)).saveAll(anyList());
-        // Verifica que la tarea se guardó con el nuevo board
         verify(taskRepository).save(task1);
     }
 
@@ -192,9 +196,9 @@ class TaskServiceTest {
 
         taskService.deleteTask(1L, owner);
 
+        verify(permissionService).checkPermission(owner, Permission.TASK_DELETE);
         verify(taskRepository).delete(task1);
         verify(taskRepository).saveAll(anyList());
-        // task2 debería haber sido reordenada a position 0
         assertThat(task2.getPosition()).isEqualTo(0);
     }
 }

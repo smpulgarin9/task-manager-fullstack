@@ -112,3 +112,11 @@ jest.mock('@react-navigation/bottom-tabs', () => {
     }),
   };
 });
+
+jest.mock('@react-native-picker/picker', () => {
+  const React = require('react');
+  const View = require('react-native').View;
+  const Picker = (props) => React.createElement(View, props, props.children);
+  Picker.Item = (props) => React.createElement(View, props, null);
+  return {Picker};
+});

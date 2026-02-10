@@ -6,6 +6,7 @@ import {authService} from '../api/authService';
 
 interface AuthState {
   token: string | null;
+  refreshToken: string | null;
   user: User | null;
   isLoading: boolean;
   isAuthenticated: boolean;
@@ -25,24 +26,25 @@ export const useAuthStore = create<AuthState>()(
   persist(
     (set, get) => ({
       token: null,
+      refreshToken: null,
       user: null,
       isLoading: false,
       isAuthenticated: false,
 
-      // Inicia sesión, guarda token en AsyncStorage y setea user en el store
+      // Inicia sesión, guarda ambos tokens en AsyncStorage y setea user en el store
       login: async (email: string, password: string) => {
         set({isLoading: true});
         try {
           const response = await authService.login(email, password);
-          await AsyncStorage.setItem('token', response.token);
           const user: User = {
             id: 0,
             email: response.email,
             fullName: response.fullName,
-            role: response.role as 'ADMIN' | 'MEMBER',
+            role: response.role as 'ADMIN' | 'PROJECT_MANAGER' | 'MEMBER',
           };
           set({
             token: response.token,
+            refreshToken: response.refreshToken,
             user,
             isAuthenticated: true,
             isLoading: false,
@@ -53,7 +55,7 @@ export const useAuthStore = create<AuthState>()(
         }
       },
 
-      // Registra usuario, guarda token y setea user en el store
+      // Registra usuario, guarda ambos tokens y setea user en el store
       register: async (
         email: string,
         password: string,
@@ -66,15 +68,15 @@ export const useAuthStore = create<AuthState>()(
             password,
             fullName,
           );
-          await AsyncStorage.setItem('token', response.token);
           const user: User = {
             id: 0,
             email: response.email,
             fullName: response.fullName,
-            role: response.role as 'ADMIN' | 'MEMBER',
+            role: response.role as 'ADMIN' | 'PROJECT_MANAGER' | 'MEMBER',
           };
           set({
             token: response.token,
+            refreshToken: response.refreshToken,
             user,
             isAuthenticated: true,
             isLoading: false,
@@ -85,29 +87,29 @@ export const useAuthStore = create<AuthState>()(
         }
       },
 
-      // Cierra sesión: limpia AsyncStorage y resetea el store
+      // Cierra sesión: llama al backend, limpia AsyncStorage y resetea el store
       logout: async () => {
-        await AsyncStorage.removeItem('token');
-        await AsyncStorage.removeItem('user');
+        await authService.logout();
         set({
           token: null,
+          refreshToken: null,
           user: null,
           isAuthenticated: false,
           isLoading: false,
         });
       },
 
-      // Al iniciar la app, lee el token de AsyncStorage y valida si hay sesión
+      // Al iniciar la app, lee ambos tokens de AsyncStorage y valida si hay sesión
       loadToken: async () => {
         set({isLoading: true});
         try {
           const token = await AsyncStorage.getItem('token');
+          const refreshToken = await AsyncStorage.getItem('refreshToken');
           if (token) {
-            // Si hay token guardado, marcamos como autenticado
-            // El user se restaura desde el persist middleware
             const currentUser = get().user;
             set({
               token,
+              refreshToken,
               isAuthenticated: true,
               isLoading: false,
               user: currentUser,
@@ -115,6 +117,7 @@ export const useAuthStore = create<AuthState>()(
           } else {
             set({
               token: null,
+              refreshToken: null,
               user: null,
               isAuthenticated: false,
               isLoading: false,
@@ -123,6 +126,7 @@ export const useAuthStore = create<AuthState>()(
         } catch {
           set({
             token: null,
+            refreshToken: null,
             user: null,
             isAuthenticated: false,
             isLoading: false,
@@ -133,9 +137,10 @@ export const useAuthStore = create<AuthState>()(
     {
       name: 'auth-storage',
       storage: createJSONStorage(() => AsyncStorage),
-      // Solo persistimos token y user, no isLoading ni isAuthenticated
+      // Solo persistimos token, refreshToken y user
       partialize: state => ({
         token: state.token,
+        refreshToken: state.refreshToken,
         user: state.user,
       }),
     },

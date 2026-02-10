@@ -2,11 +2,12 @@ export interface User {
   id: number;
   email: string;
   fullName: string;
-  role: 'ADMIN' | 'MEMBER';
+  role: 'ADMIN' | 'PROJECT_MANAGER' | 'MEMBER';
 }
 
 export interface AuthResponse {
   token: string;
+  refreshToken: string;
   email: string;
   fullName: string;
   role: string;

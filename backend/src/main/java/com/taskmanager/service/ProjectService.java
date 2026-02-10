@@ -4,6 +4,7 @@ import com.taskmanager.dto.*;
 import com.taskmanager.entity.Board;
 import com.taskmanager.entity.Project;
 import com.taskmanager.entity.User;
+import com.taskmanager.enums.Permission;
 import com.taskmanager.exception.AccessDeniedException;
 import com.taskmanager.exception.ResourceNotFoundException;
 import com.taskmanager.repository.BoardRepository;
@@ -23,9 +24,12 @@ public class ProjectService {
     private final ProjectRepository projectRepository;
     private final BoardRepository boardRepository;
     private final UserRepository userRepository;
+    private final PermissionService permissionService;
 
     @Transactional
     public ProjectDetailResponse createProject(ProjectRequest request, User currentUser) {
+        permissionService.checkPermission(currentUser, Permission.PROJECT_CREATE);
+
         Project project = Project.builder()
                 .name(request.getName())
                 .description(request.getDescription())
@@ -71,6 +75,8 @@ public class ProjectService {
 
     @Transactional
     public ProjectDetailResponse updateProject(Long id, ProjectRequest request, User currentUser) {
+        permissionService.checkPermission(currentUser, Permission.PROJECT_EDIT);
+
         Project project = projectRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Proyecto no encontrado con id: " + id));
 
@@ -88,6 +94,8 @@ public class ProjectService {
 
     @Transactional
     public void deleteProject(Long id, User currentUser) {
+        permissionService.checkPermission(currentUser, Permission.PROJECT_DELETE);
+
         Project project = projectRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Proyecto no encontrado con id: " + id));
 
@@ -98,6 +106,8 @@ public class ProjectService {
 
     @Transactional
     public ProjectDetailResponse addMember(Long projectId, String email, User currentUser) {
+        permissionService.checkPermission(currentUser, Permission.MEMBER_ADD);
+
         Project project = projectRepository.findById(projectId)
                 .orElseThrow(() -> new ResourceNotFoundException("Proyecto no encontrado con id: " + projectId));
 
@@ -117,6 +127,8 @@ public class ProjectService {
 
     @Transactional
     public ProjectDetailResponse removeMember(Long projectId, Long userId, User currentUser) {
+        permissionService.checkPermission(currentUser, Permission.MEMBER_REMOVE);
+
         Project project = projectRepository.findById(projectId)
                 .orElseThrow(() -> new ResourceNotFoundException("Proyecto no encontrado con id: " + projectId));
 

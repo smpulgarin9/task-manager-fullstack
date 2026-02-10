@@ -58,6 +58,7 @@ class AuthControllerTest {
 
         AuthResponse response = AuthResponse.builder()
                 .token("jwt-token-123")
+                .refreshToken("refresh-token-uuid")
                 .email("sara@test.com")
                 .fullName("Sara Pulgarin")
                 .role("MEMBER")
@@ -70,6 +71,7 @@ class AuthControllerTest {
                         .content(objectMapper.writeValueAsString(request)))
                 .andExpect(status().isCreated())
                 .andExpect(jsonPath("$.token").value("jwt-token-123"))
+                .andExpect(jsonPath("$.refreshToken").value("refresh-token-uuid"))
                 .andExpect(jsonPath("$.email").value("sara@test.com"))
                 .andExpect(jsonPath("$.fullName").value("Sara Pulgarin"))
                 .andExpect(jsonPath("$.role").value("MEMBER"));
@@ -100,6 +102,7 @@ class AuthControllerTest {
 
         AuthResponse response = AuthResponse.builder()
                 .token("jwt-token-456")
+                .refreshToken("refresh-token-uuid")
                 .email("sara@test.com")
                 .fullName("Sara Pulgarin")
                 .role("MEMBER")
@@ -112,6 +115,7 @@ class AuthControllerTest {
                         .content(objectMapper.writeValueAsString(request)))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.token").value("jwt-token-456"))
+                .andExpect(jsonPath("$.refreshToken").value("refresh-token-uuid"))
                 .andExpect(jsonPath("$.email").value("sara@test.com"))
                 .andExpect(jsonPath("$.fullName").value("Sara Pulgarin"))
                 .andExpect(jsonPath("$.role").value("MEMBER"));

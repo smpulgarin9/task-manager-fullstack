@@ -3,6 +3,7 @@ package com.taskmanager.service;
 import com.taskmanager.dto.AuthResponse;
 import com.taskmanager.dto.LoginRequest;
 import com.taskmanager.dto.RegisterRequest;
+import com.taskmanager.entity.RefreshToken;
 import com.taskmanager.entity.User;
 import com.taskmanager.enums.Role;
 import com.taskmanager.exception.DuplicateResourceException;
@@ -18,6 +19,7 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.security.crypto.password.PasswordEncoder;
 
+import java.time.LocalDateTime;
 import java.util.Optional;
 
 import static org.assertj.core.api.Assertions.*;
@@ -37,10 +39,14 @@ class AuthServiceTest {
     @Mock
     private JwtService jwtService;
 
+    @Mock
+    private RefreshTokenService refreshTokenService;
+
     @InjectMocks
     private AuthService authService;
 
     private User testUser;
+    private RefreshToken testRefreshToken;
 
     @BeforeEach
     void setUp() {
@@ -51,10 +57,17 @@ class AuthServiceTest {
                 .fullName("Sara Pulgarin")
                 .role(Role.MEMBER)
                 .build();
+
+        testRefreshToken = RefreshToken.builder()
+                .id(1L)
+                .token("refresh-token-uuid")
+                .user(testUser)
+                .expiryDate(LocalDateTime.now().plusDays(7))
+                .build();
     }
 
     @Test
-    @DisplayName("register - con datos válidos retorna AuthResponse con token")
+    @DisplayName("register - con datos válidos retorna AuthResponse con token y refreshToken")
     void register_conDatosValidos_retornaAuthResponse() {
         RegisterRequest request = RegisterRequest.builder()
                 .email("sara@test.com")
@@ -66,11 +79,13 @@ class AuthServiceTest {
         when(passwordEncoder.encode("123456")).thenReturn("encodedPassword");
         when(userRepository.save(any(User.class))).thenReturn(testUser);
         when(jwtService.generateToken(any(User.class))).thenReturn("jwt-token-123");
+        when(refreshTokenService.createRefreshToken(any(Long.class))).thenReturn(testRefreshToken);
 
         AuthResponse response = authService.register(request);
 
         assertThat(response).isNotNull();
         assertThat(response.getToken()).isEqualTo("jwt-token-123");
+        assertThat(response.getRefreshToken()).isEqualTo("refresh-token-uuid");
         assertThat(response.getEmail()).isEqualTo("sara@test.com");
         assertThat(response.getFullName()).isEqualTo("Sara Pulgarin");
         assertThat(response.getRole()).isEqualTo("MEMBER");
@@ -78,6 +93,7 @@ class AuthServiceTest {
         verify(userRepository).existsByEmail("sara@test.com");
         verify(userRepository).save(any(User.class));
         verify(jwtService).generateToken(any(User.class));
+        verify(refreshTokenService).createRefreshToken(any(Long.class));
     }
 
     @Test
@@ -99,7 +115,7 @@ class AuthServiceTest {
     }
 
     @Test
-    @DisplayName("login - con credenciales válidas retorna token")
+    @DisplayName("login - con credenciales válidas retorna token y refreshToken")
     void login_conCredencialesValidas_retornaToken() {
         LoginRequest request = LoginRequest.builder()
                 .email("sara@test.com")
@@ -109,16 +125,19 @@ class AuthServiceTest {
         when(userRepository.findByEmail("sara@test.com")).thenReturn(Optional.of(testUser));
         when(passwordEncoder.matches("123456", "encodedPassword")).thenReturn(true);
         when(jwtService.generateToken(testUser)).thenReturn("jwt-token-456");
+        when(refreshTokenService.createRefreshToken(1L)).thenReturn(testRefreshToken);
 
         AuthResponse response = authService.login(request);
 
         assertThat(response).isNotNull();
         assertThat(response.getToken()).isEqualTo("jwt-token-456");
+        assertThat(response.getRefreshToken()).isEqualTo("refresh-token-uuid");
         assertThat(response.getEmail()).isEqualTo("sara@test.com");
         assertThat(response.getFullName()).isEqualTo("Sara Pulgarin");
         assertThat(response.getRole()).isEqualTo("MEMBER");
 
         verify(jwtService).generateToken(testUser);
+        verify(refreshTokenService).createRefreshToken(1L);
     }
 
     @Test
